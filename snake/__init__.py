@@ -7,12 +7,9 @@
     as time passes, not on click events.
     
 '''
-__all__ = ['snake_board']
 
-from .snake_board import SnakeBoard
+__all__ = ['launch_robot']
+
 from . import snake_wpilib
-
-def launch_robot(robot_module, myrobot):
-    snake_board = SnakeBoard(8,16)
-    snake_board.run()
+from .launcher import launch_robot
 

@@ -9,27 +9,34 @@ from tkinter import *
 
 class SnakeBoard(object):
     
-    def __init__(self, rows, cols):
+    def __init__(self, controller, board_size):
         '''
             initializes all default values and creates 
             a board, waits for run() to be called
             to start the board
+            
+            controller - robot code controller class
+            board_size - a tuple with values (rows, cols)
         '''
+        
+        self.controller = controller
         self.root = Tk()
+        self.rows, self.cols = board_size
         self.margin = 5
         self.cellSize = 30
-        self.canvasWidth = 2*self.margin + cols*self.cellSize
-        self.canvasHeight = 2*self.margin + rows*self.cellSize
-        self.rows = rows
-        self.cols = cols
+        self.canvasWidth = 2*self.margin + self.cols*self.cellSize
+        self.canvasHeight = 2*self.margin + self.rows*self.cellSize
         
         self.canvas = Canvas(self.root, width=self.canvasWidth, height=self.canvasHeight)
         self.canvas.pack()
         self.root.resizable(width=0, height=0)
+        
         # Store canvas in root and in canvas itself for callbacks
         self.root.canvas = self.canvas.canvas = self.canvas
+        
         # Set up canvas data and call init
         self.init_canvas()
+        
         # set up events
         self.root.bind("<Key>", self.key_pressed)
         self.timer_fired()
@@ -39,13 +46,9 @@ class SnakeBoard(object):
          self.root.mainloop()  # This call BLOCKS
          
     def timer_fired(self):
-        '''
-            I think this should be called externally in an Update function
-        '''
         ignoreThisTimerEvent = self.ignoreNextTimerEvent
         self.ignoreNextTimerEvent = False
-        if ((self.isGameOver == False) and
-            (ignoreThisTimerEvent == False)):
+        if self.isGameOver == False and ignoreThisTimerEvent == False:
             # only process timer_fired if game is not over
             #move_snake(self.canvas, self.drow, self.dcol)
             self.redraw_all()
@@ -53,20 +56,13 @@ class SnakeBoard(object):
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
 
-    def key_pressed(self):
+    def key_pressed(self, event):
         '''
             likely to take in a set of parameters to treat as up, down, left,
             right, likley to actually be based on a joystick event... not sure
             yet
         '''
         pass
-    
-    def start_board(self):
-        '''
-            starts the board, this is a blocking function and should usually
-            be called as a separate thread
-        '''
-        root.mainloop()   
     
     def init_canvas(self):
         '''
@@ -84,7 +80,7 @@ class SnakeBoard(object):
         '''
             loads the board on to the self.canvas
         '''
-        self.snakeBoard = [ ]
+        self.snakeBoard = []
         for row in range(self.rows): 
             self.snakeBoard += [[0] * self.cols]
         
@@ -94,7 +90,7 @@ class SnakeBoard(object):
     def redraw_all(self):
         self.canvas.delete(ALL)
         self.draw_snake_board()
-        if (self.isGameOver == True):
+        if self.isGameOver == True:
             cx = self.canvasWidth/2
             cy = self.canvasHeight/2
             self.canvas.create_text(cx, cy, text="Game Over!", font=("Helvetica", 32, "bold"))

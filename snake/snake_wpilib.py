@@ -22,7 +22,7 @@ class FakeTime(object):
         return time.time()
         
     def IncrementTimeBy(self, secs):
-        time.sleep(sec)
+        time.sleep(secs)
     
     def AddNotifier(self, notifier):
         # todo: use threads to implement these
