@@ -10,9 +10,9 @@
 __all__ = ['snake_board']
 
 from .snake_board import SnakeBoard
+from . import snake_wpilib
 
 def launch_robot(robot_module, myrobot):
     snake_board = SnakeBoard(8,16)
-    snake_board.name = thread_num
-    snake_board.start()
+    snake_board.run()
 
