@@ -74,14 +74,20 @@ class SnakeBoard(object):
             right, likley to actually be based on a joystick event... not sure
             yet
         '''
-        if (event.keysym == "Up"):
+        if event.keysym == "Up":
             self.controller.set_joystick(0, 1)
-        elif (event.keysym == "Down"):
+        elif event.keysym == "Down":
             self.controller.set_joystick(0, -1)
-        elif (event.keysym == "Left"):
+        elif event.keysym == "Left":
             self.controller.set_joystick(-1, 0)
-        elif (event.keysym == "Right"):
+        elif event.keysym == "Right":
             self.controller.set_joystick(1, 0)
+        elif event.char == " ":
+            mode = self.controller.get_mode()
+            if mode == self.controller.MODE_DISABLED:
+                self.controller.set_mode(self.controller.MODE_OPERATOR_CONTROL)
+            else:
+                self.controller.set_mode(self.controller.MODE_DISABLED)
     
     def init_canvas(self):
         '''

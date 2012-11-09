@@ -2,9 +2,12 @@
     This manages the active state of the robot
 ''' 
 
+import sys
 import threading
+
 import fake_wpilib as wpilib
 from .drive_train import DriveTrain
+
 class RobotController(object):
 
     MODE_DISABLED = 0
@@ -31,12 +34,12 @@ class RobotController(object):
         self.thread = threading.Thread(target=self._robot_thread)
         
     def run(self):
-        self.run_code = True
+        self._run_code = True
         self.thread.start()
         
     def stop(self):
         with self._lock:
-            self.run_code = False
+            self._run_code = False
         
             # if the robot code is spinning in any of the modes, then
             # we need to change the mode so it returns back to us
@@ -60,11 +63,10 @@ class RobotController(object):
         '''
             Receives joystick values from the SnakeBoard
         '''
-        with self._lock:
-            driver_station = wpilib.DriverStation.GetInstance()
-            drive_stick = driver_station.sticks[0]
-            drive_stick.x = x
-            drive_stick.y = y
+        with self.driver_station.lock:
+            drive_stick = self.driver_station.sticks[0]
+            drive_stick[0] = x
+            drive_stick[1] = y
             
     def set_mode(self, mode):
         
@@ -76,6 +78,9 @@ class RobotController(object):
         with self._lock:
             self.mode = mode
 
+    def get_mode(self):
+        with self._lock:
+            return self.mode
 
     #
     # Runs the code
@@ -96,15 +101,24 @@ class RobotController(object):
             if not self._run_code:
                 return False
             return self.mode == RobotController.MODE_OPERATOR_CONTROL
+            
+    def on_WatchdogError(self, last_fed, period, expiration):
+        print('WATCHDOG FAILURE! Last fed %0.3f seconds ago (expiration: %0.3f seconds)' % 
+                                  (period, expiration), file=sys.stderr)
+        self.set_mode(RobotController.MODE_DISABLED)
     
     def _robot_thread(self):
+        
+        # setup things for the robot
+        self.driver_station = wpilib.DriverStation.GetInstance()
+        self.myrobot._watchdog.error_handler = self.on_WatchdogError
         
         while True:
             with self._lock:
             
                 mode = self.mode
             
-                if not self.run_code:
+                if not self._run_code:
                     break
                     
             # TODO: Catch robot exceptions and tell the user about it, while

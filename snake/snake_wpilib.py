@@ -56,14 +56,14 @@ class SnakeWatchdog(object):
     '''
     
     kDefaultWatchdogExpiration = fake_wpilib.Watchdog.kDefaultWatchdogExpiration
-    
-    # a callable object that takes a single parameter, which is the 
-    # time that the watchdog was last fed
-    # -> Note that this handler may be called multiple times, and
-    #    it will be called from the watchdog thread.
-    watchdog_error_handler = None
 
     def __init__(self):
+    
+        # a callable object that takes a single parameter, which is the 
+        # time that the watchdog was last fed
+        # -> Note that this handler may be called multiple times, and
+        #    it will be called from the watchdog thread.
+        error_handler = None
     
         self.enabled = False
         self.fed = None
@@ -157,8 +157,8 @@ class SnakeWatchdog(object):
                         # looks like someone forgot to feed the watchdog!
                         self.alive = False
                         
-                        if SnakeWatchdog.watchdog_error_handler is not None:
-                            SnakeWatchdog.watchdog_error_handler(self.fed)
+                        if self.error_handler is not None:
+                            self.error_handler(self.fed, period, self.expiration)
                         else:                    
                             print('WATCHDOG FAILURE! Last fed %0.3f seconds ago (expiration: %0.3f seconds)' % 
                                   (period, self.expiration), file=sys.stderr)
