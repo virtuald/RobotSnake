@@ -3,7 +3,8 @@
 ''' 
 
 import threading
-
+import fake_wpilib as wpilib
+from .drive_train import DriveTrain
 class RobotController(object):
 
     MODE_DISABLED = 0
@@ -16,6 +17,7 @@ class RobotController(object):
     
         self.robot_module = robot_module
         self.myrobot = myrobot
+        self.drive_train = DriveTrain(DriveTrain.TANK_TREAD)
         
         # attach to the robot
         self.myrobot.on_IsEnabled = self.on_IsEnabled
@@ -54,26 +56,15 @@ class RobotController(object):
     # API used by the SnakeBoard class
     #
     
-    def get_direction(self):
-        '''
-            Returns a tuple of (direction, speed) indicating the robot's
-            current desired speed/direction
-        '''
-        
-        with self._lock:
-        
-            # do something like fakewpilib.CAN._devices[0].Get()
-        
-            pass
-        
-        return 0,0
-    
     def set_joystick(self, x, y):
         '''
             Receives joystick values from the SnakeBoard
         '''
         with self._lock:
-            pass
+            driver_station = wpilib.DriverStation.GetInstance()
+            drive_stick = driver_station.sticks[0]
+            drive_stick.x = x
+            drive_stick.y = y
             
     def set_mode(self, mode):
         
@@ -84,7 +75,8 @@ class RobotController(object):
         
         with self._lock:
             self.mode = mode
-    
+
+
     #
     # Runs the code
     #

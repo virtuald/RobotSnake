@@ -50,19 +50,38 @@ class SnakeBoard(object):
         self.ignoreNextTimerEvent = False
         if self.isGameOver == False and ignoreThisTimerEvent == False:
             # only process timer_fired if game is not over
-            #move_snake(self.canvas, self.drow, self.dcol)
+            self.move_robot()
             self.redraw_all()
+            #draw robot position
+            self.draw_snake_cell(self.robot_pos[0], self.robot_pos[1], "red")
         # whether or not game is over, call next timer_fired
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
 
+    def move_robot(self):
+        '''
+            direction = self.controller.drive_train.get_direction()
+            if direction not None:
+                move_direction = direction[0]
+                if move_direction >= 
+                self.robot_pos += 
+        '''
+        pass
+            
     def key_pressed(self, event):
         '''
             likely to take in a set of parameters to treat as up, down, left,
             right, likley to actually be based on a joystick event... not sure
             yet
         '''
-        pass
+        if (event.keysym == "Up"):
+            self.controller.set_joystick(0, 1)
+        elif (event.keysym == "Down"):
+            self.controller.set_joystick(0, -1)
+        elif (event.keysym == "Left"):
+            self.controller.set_joystick(-1, 0)
+        elif (event.keysym == "Right"):
+            self.controller.set_joystick(1, 0)
     
     def init_canvas(self):
         '''
@@ -83,9 +102,18 @@ class SnakeBoard(object):
         self.snakeBoard = []
         for row in range(self.rows): 
             self.snakeBoard += [[0] * self.cols]
-        
+        self.spawn_robot()
         #find_snake_head(self.canvas)
         #place_food(self.canvas)
+        
+    def spawn_robot(self):
+        '''
+           Does things required to spawn a robot on to field including 
+           storing its locations, location is stored as location on map
+           and robots facing direction which is represented as degrees
+        '''
+        self.robot_pos = self.controller.robot_pos = (self.rows//2, self.cols//2,
+                                                      0)
         
     def redraw_all(self):
         self.canvas.delete(ALL)
@@ -101,13 +129,12 @@ class SnakeBoard(object):
         cols = len(self.snakeBoard[0])
         for row in range(rows):
             for col in range(cols):
-                self.draw_snake_cell(row, col)
+                self.draw_snake_cell(row, col, "white")
 
-    def draw_snake_cell(self, row, col):
+    def draw_snake_cell(self, row, col, color):
         left = self.margin + col * self.cellSize
         right = left + self.cellSize
         top = self.margin + row * self.cellSize
         bottom = top + self.cellSize
-        self.canvas.create_rectangle(left, top, right, bottom, fill="white")
-
+        self.canvas.create_rectangle(left, top, right, bottom, fill=color)
 
