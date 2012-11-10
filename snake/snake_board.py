@@ -5,7 +5,7 @@
     to handle multiple instances of snake robots 
 '''
 
-from tkinter import *
+import tkinter as tk
 
 class SnakeBoard(object):
     
@@ -20,7 +20,7 @@ class SnakeBoard(object):
         '''
         
         self.controller = controller
-        self.root = Tk()
+        self.root = tk.Tk()
         self.root.wm_title("RobotSnake")
         self.rows, self.cols = board_size
         self.margin = 5
@@ -28,7 +28,7 @@ class SnakeBoard(object):
         self.canvasWidth = 2*self.margin + self.cols*self.cellSize
         self.canvasHeight = 2*self.margin + self.rows*self.cellSize
         
-        self.canvas = Canvas(self.root, width=self.canvasWidth, height=self.canvasHeight)
+        self.canvas = tk.Canvas(self.root, width=self.canvasWidth, height=self.canvasHeight)
         self.canvas.pack()
         self.root.resizable(width=0, height=0)
         
@@ -43,8 +43,8 @@ class SnakeBoard(object):
         self.timer_fired()
         
     def run(self):
-         # and launch the thread
-         self.root.mainloop()  # This call BLOCKS
+        # and launch the thread
+        self.root.mainloop()  # This call BLOCKS
          
     def timer_fired(self):
         ignoreThisTimerEvent = self.ignoreNextTimerEvent
@@ -92,7 +92,7 @@ class SnakeBoard(object):
     
     def init_canvas(self):
         '''
-            inits self.canvas to draw on
+            initializes self.canvas to draw on
         '''
         self.load_snake_board()
         self.inDebugMode = False
@@ -123,7 +123,7 @@ class SnakeBoard(object):
                                                       0)
         
     def redraw_all(self):
-        self.canvas.delete(ALL)
+        self.canvas.delete(tk.ALL)
         self.draw_snake_board()
         if self.isGameOver == True:
             cx = self.canvasWidth/2
