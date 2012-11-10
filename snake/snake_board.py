@@ -21,6 +21,7 @@ class SnakeBoard(object):
         
         self.controller = controller
         self.root = Tk()
+        self.root.wm_title("RobotSnake")
         self.rows, self.cols = board_size
         self.margin = 5
         self.cellSize = 30
