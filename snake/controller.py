@@ -17,6 +17,7 @@ class RobotController(object):
     def __init__(self, robot_module, myrobot):
     
         self.mode = RobotController.MODE_DISABLED
+        self.mode_callback = None
     
         self.robot_module = robot_module
         self.myrobot = myrobot
@@ -59,6 +60,11 @@ class RobotController(object):
     # API used by the SnakeBoard class
     #
     
+    def on_mode_change(self, callable):
+        '''When the robot mode changes, call the function with the mode'''
+        with self._lock:
+            self.mode_callback = callable
+    
     def set_joystick(self, x, y):
         '''
             Receives joystick values from the SnakeBoard
@@ -77,6 +83,10 @@ class RobotController(object):
         
         with self._lock:
             self.mode = mode
+            callback = self.mode_callback
+            
+        # don't call from inside the lock
+        callback(mode)
 
     def get_mode(self):
         with self._lock:
