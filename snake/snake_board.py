@@ -45,26 +45,26 @@ class SnakeBoard(object):
         
         # Set up invoke
         self.queue = queue.Queue()
-        self.root.bind('<<Idle>>', self._on_invoke)
+        self.root.bind('<<Idle>>', self._on_idle)
         
         # set up events
         self.root.bind("<Key>", self.key_pressed)
         
         # connect to the controller
-        self.controller.on_mode_change(lambda mode: self.invoke(self.on_robot_mode_change, mode))
+        self.controller.on_mode_change(lambda mode: self.idle_add(self.on_robot_mode_change, mode))
         
         self.timer_fired()
         
-    def invoke(self, callable, *args):
+    def idle_add(self, callable, *args):
         '''Call this with a function as the argument, and that function
            will be called on the GUI thread via an event
            
            This function returns immediately
         '''
         self.queue.put((callable, args))
-        self.root.event_generate('<<Idle>>')
+        self.root.event_generate('<<Idle>>', when='tail')
         
-    def _on_invoke(self, event):
+    def _on_idle(self, event):
         '''This should never be called directly, it is called via an 
            event, and should always be on the GUI thread'''
         try:
