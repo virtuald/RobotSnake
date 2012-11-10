@@ -12,11 +12,13 @@ def launch_robot(robot_module, myrobot, board_size=(8,16)):
     # create the robot controller
     controller = RobotController(robot_module, myrobot)
     
+    # start the robot controller (does not block)
+    controller.run()
+    
     # create the board 
     snake_board = SnakeBoard(controller, board_size)
     
-    # start the robot controller (does not block)
-    controller.run()
+
     
     # launch the board last (blocks until game is over)
     snake_board.run()

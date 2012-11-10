@@ -69,7 +69,7 @@ class RobotController(object):
         '''
             Receives joystick values from the SnakeBoard
         '''
-        with self.driver_station.lock:
+        with self._lock:
             drive_stick = self.driver_station.sticks[0]
             drive_stick[0] = x
             drive_stick[1] = y

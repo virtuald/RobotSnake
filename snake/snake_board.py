@@ -12,7 +12,11 @@
 import tkinter as tk
 import queue
 
+DEGREES = 360
+
 class SnakeBoard(object):
+    
+
     
     def __init__(self, controller, board_size):
         '''
@@ -91,17 +95,41 @@ class SnakeBoard(object):
         # whether or not game is over, call next timer_fired
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
+        self.canvas.after(delay, self.timer_fired) # pause, then call timerFired again
 
     def move_robot(self):
-        '''
             direction = self.controller.drive_train.get_direction()
-            if direction not None:
-                move_direction = direction[0]
-                if move_direction >= 
-                self.robot_pos += 
-        '''
-        pass
-            
+            if direction is not None:
+                #currently on a 2d grid board we are allowing only movement and
+                #yaw in the 0, 90, 180, 270 directions
+                robot_direction = direction[0]
+                robot_speed = direction[1]
+                robot_yaw = direction[2]
+                facing =  self.controller.robot_face
+                #since move_direction is referencing the robot and facing
+                #references the board the combined angle is the movement
+                #referencing the board  
+                move_direction =  (robot_direction + facing) % DEGREES
+                if move_direction >= 0 and move_direction < 90:
+                    self.robot_pos[1] += robot_speed
+                elif move_direction >= 90 and move_direction < 180:
+                    self.robot_pos[0] += robot_speed
+                elif move_direction >= 180 and move_direction < 270:
+                    self.robot_pos[1] -= robot_speed
+                elif move_direction >= 270 and move_direction < 360:
+                    self.robot_pos[0] -= robot_speed
+                
+                if robot_speed != 0:
+                    print("Robot Facing: " + str(facing) )
+                    print("Robot Direction: " + str(robot_direction))
+                    print("Robot Speed: " + str(robot_speed))
+                    print("Move Direction: " + str(move_direction))
+                    print("Pos: " +  str(self.robot_pos[0]) + ", " + 
+                          str(self.robot_pos[1]))
+                    print("Yaw: " + str(robot_yaw) )
+                
+            #clear joystick value
+            self.controller.set_joystick(0, 0)
     def key_pressed(self, event):
         '''
             likely to take in a set of parameters to treat as up, down, left,
@@ -109,9 +137,9 @@ class SnakeBoard(object):
             yet
         '''
         if event.keysym == "Up":
-            self.controller.set_joystick(0, 1)
-        elif event.keysym == "Down":
             self.controller.set_joystick(0, -1)
+        elif event.keysym == "Down":
+            self.controller.set_joystick(0, 1)
         elif event.keysym == "Left":
             self.controller.set_joystick(-1, 0)
         elif event.keysym == "Right":
@@ -152,8 +180,11 @@ class SnakeBoard(object):
            storing its locations, location is stored as location on map
            and robots facing direction which is represented as degrees
         '''
-        self.robot_pos = self.controller.robot_pos = (self.rows//2, self.cols//2,
-                                                      0)
+        #defines robot position
+        self.robot_pos = self.controller.robot_pos = [self.rows//2, self.cols//2,
+                                                      0]
+        #defines direction robot is facing in degrees 
+        self.controller.robot_face = 0 
         
     def redraw_all(self):
         self.canvas.delete(tk.ALL)
@@ -169,13 +200,12 @@ class SnakeBoard(object):
             self.canvas.create_text(cx, cy, text="ROBOT DISABLED", font=("Helvetica", 32, "bold"))
             
     def draw_snake_board(self):
-        
         rows = len(self.snakeBoard)
         cols = len(self.snakeBoard[0])
         for row in range(rows):
             for col in range(cols):
                 self.draw_snake_cell(row, col, "white")
-
+        
     def draw_snake_cell(self, row, col, color):
         left = self.margin + col * self.cellSize
         right = left + self.cellSize
