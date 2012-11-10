@@ -3,9 +3,14 @@
     
     This is the game board where different snake robots play. It should be able
     to handle multiple instances of snake robots 
+    
+    Note: http://bugs.python.org/issue11077 seems to indicate that tk is 
+    supposed to be thread-safe, but everyone else on the net insists that
+    it isn't. Be safe, don't call into the GUI from another thread.  
 '''
 
 import tkinter as tk
+import queue
 
 class SnakeBoard(object):
     
@@ -38,9 +43,37 @@ class SnakeBoard(object):
         # Set up canvas data and call init
         self.init_canvas()
         
+        # Set up invoke
+        self.queue = queue.Queue()
+        self.root.bind('<<Idle>>', self._on_invoke)
+        
         # set up events
         self.root.bind("<Key>", self.key_pressed)
+        
+        # connect to the controller
+        self.controller.on_mode_change(lambda mode: self.invoke(self.on_robot_mode_change, mode))
+        
         self.timer_fired()
+        
+    def invoke(self, callable, *args):
+        '''Call this with a function as the argument, and that function
+           will be called on the GUI thread via an event
+           
+           This function returns immediately
+        '''
+        self.queue.put((callable, args))
+        self.root.event_generate('<<Idle>>')
+        
+    def _on_invoke(self, event):
+        '''This should never be called directly, it is called via an 
+           event, and should always be on the GUI thread'''
+        try:
+            while True:
+                callable, args = self.queue.get(block=False)
+                callable(*args)
+        except queue.Empty:
+            pass
+        
         
     def run(self):
         # and launch the thread
@@ -72,7 +105,7 @@ class SnakeBoard(object):
     def key_pressed(self, event):
         '''
             likely to take in a set of parameters to treat as up, down, left,
-            right, likley to actually be based on a joystick event... not sure
+            right, likely to actually be based on a joystick event... not sure
             yet
         '''
         if event.keysym == "Up":
@@ -125,10 +158,15 @@ class SnakeBoard(object):
     def redraw_all(self):
         self.canvas.delete(tk.ALL)
         self.draw_snake_board()
+        
+        cx = self.canvasWidth/2
+        cy = self.canvasHeight/2
+        
         if self.isGameOver == True:
-            cx = self.canvasWidth/2
-            cy = self.canvasHeight/2
             self.canvas.create_text(cx, cy, text="Game Over!", font=("Helvetica", 32, "bold"))
+            
+        elif self.controller.get_mode() == self.controller.MODE_DISABLED:
+            self.canvas.create_text(cx, cy, text="ROBOT DISABLED", font=("Helvetica", 32, "bold"))
             
     def draw_snake_board(self):
         
@@ -145,3 +183,5 @@ class SnakeBoard(object):
         bottom = top + self.cellSize
         self.canvas.create_rectangle(left, top, right, bottom, fill=color)
 
+    def on_robot_mode_change(self, mode):
+        self.redraw_all()
