@@ -67,12 +67,12 @@ class SnakeBoard(object):
     def _on_idle(self, event):
         '''This should never be called directly, it is called via an 
            event, and should always be on the GUI thread'''
-        try:
-            while True:
+        while True:
+            try:
                 callable, args = self.queue.get(block=False)
-                callable(*args)
-        except queue.Empty:
-            pass
+            except queue.Empty:
+                break
+            callable(*args)
         
         
     def run(self):
