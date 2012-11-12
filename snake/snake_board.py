@@ -119,7 +119,8 @@ class SnakeBoard(object):
                 elif move_direction >= 270 and move_direction < 360:
                     self.robot_pos[0] -= robot_speed
                 
-                if robot_speed != 0:
+                self.controller.robot_face = (robot_yaw * DEGREES + facing ) % DEGREES
+                if robot_speed != 0 or robot_yaw !=0:
                     print("Robot Facing: " + str(facing) )
                     print("Robot Direction: " + str(robot_direction))
                     print("Robot Speed: " + str(robot_speed))
@@ -137,9 +138,9 @@ class SnakeBoard(object):
             yet
         '''
         if event.keysym == "Up":
-            self.controller.set_joystick(0, -1)
-        elif event.keysym == "Down":
             self.controller.set_joystick(0, 1)
+        elif event.keysym == "Down":
+            self.controller.set_joystick(0, -1)
         elif event.keysym == "Left":
             self.controller.set_joystick(-1, 0)
         elif event.keysym == "Right":
