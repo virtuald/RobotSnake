@@ -91,7 +91,8 @@ class SnakeBoard(object):
             self.move_robot()
             self.redraw_all()
             #draw robot position
-            self.draw_snake_cell(self.robot_pos[0], self.robot_pos[1], "red")
+            x, y, z = self.controller.robot_pos
+            self.draw_snake_cell(x, y, "red")
         # whether or not game is over, call next timer_fired
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
@@ -111,13 +112,13 @@ class SnakeBoard(object):
                 #referencing the board  
                 move_direction =  (robot_direction + facing) % DEGREES
                 if move_direction >= 0 and move_direction < 90:
-                    self.robot_pos[1] += robot_speed
+                    self.controller.robot_pos[1] += robot_speed
                 elif move_direction >= 90 and move_direction < 180:
-                    self.robot_pos[0] += robot_speed
+                    self.controller.robot_pos[0] += robot_speed
                 elif move_direction >= 180 and move_direction < 270:
-                    self.robot_pos[1] -= robot_speed
+                    self.controller.robot_pos[1] -= robot_speed
                 elif move_direction >= 270 and move_direction < 360:
-                    self.robot_pos[0] -= robot_speed
+                    self.controller.robot_pos[0] -= robot_speed
                 
                 self.controller.robot_face = (robot_yaw * DEGREES + facing ) % DEGREES
                 if robot_speed != 0 or robot_yaw !=0:
@@ -125,8 +126,8 @@ class SnakeBoard(object):
                     print("Robot Direction: " + str(robot_direction))
                     print("Robot Speed: " + str(robot_speed))
                     print("Move Direction: " + str(move_direction))
-                    print("Pos: " +  str(self.robot_pos[0]) + ", " + 
-                          str(self.robot_pos[1]))
+                    print("Pos: " +  str(self.controller.robot_pos[0]) + ", " + 
+                          str(self.controller.robot_pos[1]))
                     print("Yaw: " + str(robot_yaw) )
                 
             #clear joystick value
@@ -182,7 +183,7 @@ class SnakeBoard(object):
            and robots facing direction which is represented as degrees
         '''
         #defines robot position
-        self.robot_pos = self.controller.robot_pos = [self.rows//2, self.cols//2,
+        self.controller.robot_pos = [self.rows//2, self.cols//2,
                                                       0]
         #defines direction robot is facing in degrees 
         self.controller.robot_face = 0 
@@ -206,6 +207,18 @@ class SnakeBoard(object):
         for row in range(rows):
             for col in range(cols):
                 self.draw_snake_cell(row, col, "white")
+        
+    def draw_robot_cell(self, row, col, color, facing):
+        
+        # TODO: http://stackoverflow.com/questions/3408779/how-do-i-rotate-a-polygon-in-python-on-a-tkinter-canvas
+        
+        left = self.margin + col * self.cellSize
+        right = left + self.cellSize
+        top = self.margin + row * self.cellSize
+        bottom = top + self.cellSize
+        
+        self.canvas.create_rectangle(left, top, right, bottom, fill=color)
+        
         
     def draw_snake_cell(self, row, col, color):
         left = self.margin + col * self.cellSize
