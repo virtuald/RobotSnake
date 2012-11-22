@@ -11,6 +11,7 @@
 
 import tkinter as tk
 import queue
+import math 
 
 DEGREES = 360
 
@@ -93,6 +94,7 @@ class SnakeBoard(object):
             #draw robot position
             x, y, z = self.controller.robot_pos
             self.draw_snake_cell(x, y, "red")
+            self.draw_direction(x,y,self.controller.robot_face,"green")
         # whether or not game is over, call next timer_fired
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
@@ -143,9 +145,9 @@ class SnakeBoard(object):
         elif event.keysym == "Down":
             self.controller.set_joystick(0, -1)
         elif event.keysym == "Left":
-            self.controller.set_joystick(-1, 0)
-        elif event.keysym == "Right":
             self.controller.set_joystick(1, 0)
+        elif event.keysym == "Right":
+            self.controller.set_joystick(-1, 0)
         elif event.char == " ":
             mode = self.controller.get_mode()
             if mode == self.controller.MODE_DISABLED:
@@ -227,5 +229,27 @@ class SnakeBoard(object):
         bottom = top + self.cellSize
         self.canvas.create_rectangle(left, top, right, bottom, fill=color)
 
+        
+    def draw_direction(self,row,col, direction,color):
+        left = self.margin + col * self.cellSize
+        right = left + self.cellSize
+        top = self.margin + row * self.cellSize
+        bottom = top + self.cellSize
+        center_y = (top + bottom) / 2
+        center_x = (left + right) / 2
+        radius = self.cellSize / 2
+        rad_dir = math.radians(direction)
+        rad_angle1 = math.radians(135)
+        rad_angle2 = math.radians(225)
+        point1 = center_x + radius * math.cos(rad_dir), center_y + radius * math.sin(rad_dir)
+        point2 = center_x + radius * math.cos(rad_dir + rad_angle1), center_y + radius * math.sin(rad_dir + rad_angle1)
+        point3 = center_x + radius * math.cos(rad_dir + rad_angle2), center_y + radius * math.sin(rad_dir + rad_angle2)
+        direction = self.controller.drive_train.get_direction()
+        yaw = direction[2]
+        self.canvas.create_polygon(point1, point2, point3, fill=color)
+
+        
+        
+        
     def on_robot_mode_change(self, mode):
         self.redraw_all()
