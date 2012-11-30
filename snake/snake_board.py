@@ -32,6 +32,26 @@ class SnakeBoard(object):
         self.controller = controller
         self.root = tk.Tk()
         self.root.wm_title("RobotSnake")
+        
+        # setup mode switch
+        frame = tk.Frame(self.root)
+        frame.pack(side=tk.TOP, anchor=tk.W)
+        
+        self.mode = tk.IntVar()
+        
+        def _set_mode():
+            self.controller.set_mode(self.mode.get())
+        
+        button = tk.Radiobutton(frame, text='Disabled', variable=self.mode, \
+                                value=controller.MODE_DISABLED, command=_set_mode)
+        button.pack(side=tk.LEFT)
+        button = tk.Radiobutton(frame, text='Autonomous', variable=self.mode, \
+                                value=controller.MODE_AUTONOMOUS, command=_set_mode)
+        button.pack(side=tk.LEFT)
+        button = tk.Radiobutton(frame, text='Teleoperated', variable=self.mode, \
+                                value=controller.MODE_OPERATOR_CONTROL, command=_set_mode)
+        button.pack(side=tk.LEFT)
+        
         self.rows, self.cols = board_size
         self.margin = 5
         self.cellSize = 30
