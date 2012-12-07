@@ -21,8 +21,18 @@ class DriveTrain(object):
         with self._lock:
             if self.drive_train == 0:
                 try:
-                    jag1 = -(wpilib.DigitalModule._pwm[0].Get()) 
-                    jag2 = wpilib.DigitalModule._pwm[1].Get()
+                    jag_r = wpilib.DigitalModule._pwm[0]
+                    jag_l = wpilib.DigitalModule._pwm[1]
+                    
+                    jag1 = 0
+                    jag2 = 0
+                    
+                    if jag_r is not None:
+                        jag1 = -jag_r.Get()
+                    
+                    if jag_l is not None:
+                        jag2 = jag_l.Get()
+
                     #speed obtained by adding together motor speeds
                     speed = (jag1 + jag2) / 2 
                     #Assuming that the treads are 1m away from center
