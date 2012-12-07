@@ -4,6 +4,7 @@
 
 import sys
 import threading
+import time
 
 import fake_wpilib as wpilib
 from .drive_train import DriveTrain
@@ -13,6 +14,10 @@ class RobotController(object):
     MODE_DISABLED = 0
     MODE_AUTONOMOUS = 1
     MODE_OPERATOR_CONTROL = 2
+    
+    mode_map = {MODE_DISABLED: 'Disabled', 
+                MODE_AUTONOMOUS: 'Autonomous',
+                MODE_OPERATOR_CONTROL: 'OperatorControl'}
     
     def __init__(self, robot_module, myrobot):
     
@@ -60,6 +65,9 @@ class RobotController(object):
     # API used by the SnakeBoard class
     #
     
+    def is_alive(self):
+        return self.thread.is_alive()
+    
     def on_mode_change(self, callable):
         '''When the robot mode changes, call the function with the mode'''
         with self._lock:
@@ -82,11 +90,13 @@ class RobotController(object):
             raise ValueError("Invalid value for mode: %s" % mode)
         
         with self._lock:
+            old_mode = self.mode
             self.mode = mode
             callback = self.mode_callback
             
         # don't call from inside the lock
-        callback(mode)
+        if old_mode != mode and callback is not None:
+            callback(mode)
 
     def get_mode(self):
         with self._lock:
@@ -96,18 +106,32 @@ class RobotController(object):
     # Runs the code
     #
     
+    def _check_sleep(self):
+        '''This ensures that the robot code called Wait() at some point'''
+        
+        # TODO: There are some cases where it would be ok to do this... 
+        if not wpilib.fake_time.FAKETIME.slept:
+            errstr = '%s() function is not calling wpilib.Wait() in its loop!' % self.mode_map[self.mode]
+            raise RuntimeError(errstr)
+            
+        wpilib.fake_time.FAKETIME.slept = False
+        
+    
     def on_IsEnabled(self):
         with self._lock:
+            self._check_sleep()
             return self.mode != RobotController.MODE_DISABLED
         
     def on_IsAutonomous(self, tm):
         with self._lock:
+            self._check_sleep()
             if not self._run_code:
                 return False
             return self.mode == RobotController.MODE_AUTONOMOUS
         
     def on_IsOperatorControl(self, tm):
         with self._lock:
+            self._check_sleep()
             if not self._run_code:
                 return False
             return self.mode == RobotController.MODE_OPERATOR_CONTROL
@@ -123,23 +147,41 @@ class RobotController(object):
         self.driver_station = wpilib.DriverStation.GetInstance()
         self.myrobot._watchdog.error_handler = self.on_WatchdogError
         
-        while True:
-            with self._lock:
-            
-                mode = self.mode
-            
-                if not self._run_code:
-                    break
+        last_mode = None
+        
+        try:
+            while True:
+                with self._lock:
+                
+                    mode = self.mode
+                
+                    if not self._run_code:
+                        break
                     
-            # TODO: Catch robot exceptions and tell the user about it, while
-            # handling it correctly in the GUI
+                # Detect if the code is implemented improperly
+                # -> This error occurs if the robot returns from one of its 
+                #    functions for any reason other than a mode change, as 
+                #    this is the only acceptable reason for this to occur
+                if last_mode is not None:
+                    if last_mode == mode:                        
+                        errstr = '%s() function returned before the mode changed' % self.mode_map[last_mode]
+                        raise RuntimeError(errstr)
+                    
+                # reset this, just in case
+                wpilib.fake_time.FAKETIME.slept = True
                 
-            # TODO: Print status indicating what's happening here
+                if mode == RobotController.MODE_DISABLED:
+                    self.myrobot.Disabled()
+                elif mode == RobotController.MODE_AUTONOMOUS:
+                    self.myrobot.Autonomous()
+                elif mode == RobotController.MODE_OPERATOR_CONTROL:
+                    self.myrobot.OperatorControl()
+                    
+                # make sure infinite loops don't kill the processor... 
+                time.sleep(0.001)
+                last_mode = mode
                 
-            if mode == RobotController.MODE_DISABLED:
-                self.myrobot.Disabled()
-            elif mode == RobotController.MODE_AUTONOMOUS:
-                self.myrobot.Autonomous()
-            elif mode == RobotController.MODE_OPERATOR_CONTROL:
-                self.myrobot.OperatorControl()
+        except:
+            self.set_mode(RobotController.MODE_DISABLED)
+            raise
         
