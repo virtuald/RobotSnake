@@ -16,7 +16,7 @@ import fake_wpilib.fake_time
 class SnakeTime(object):
     
     def __init__(self):
-        self.slept = True
+        self.slept = [True]*3
         self.time = 0
         self.notifiers = []
 
@@ -24,7 +24,7 @@ class SnakeTime(object):
         return time.time()
         
     def IncrementTimeBy(self, secs):
-        self.slept = True
+        self.slept = [True]*3
         time.sleep(secs)
     
     def AddNotifier(self, notifier):

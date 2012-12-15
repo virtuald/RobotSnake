@@ -106,32 +106,32 @@ class RobotController(object):
     # Runs the code
     #
     
-    def _check_sleep(self):
+    def _check_sleep(self, idx):
         '''This ensures that the robot code called Wait() at some point'''
         
         # TODO: There are some cases where it would be ok to do this... 
-        if not wpilib.fake_time.FAKETIME.slept:
+        if not wpilib.fake_time.FAKETIME.slept[idx]:
             errstr = '%s() function is not calling wpilib.Wait() in its loop!' % self.mode_map[self.mode]
             raise RuntimeError(errstr)
             
-        wpilib.fake_time.FAKETIME.slept = False
+        wpilib.fake_time.FAKETIME.slept[idx] = False
         
     
     def on_IsEnabled(self):
         with self._lock:
-            self._check_sleep()
+            self._check_sleep(0)
             return self.mode != RobotController.MODE_DISABLED
         
     def on_IsAutonomous(self, tm):
         with self._lock:
-            self._check_sleep()
+            self._check_sleep(1)
             if not self._run_code:
                 return False
             return self.mode == RobotController.MODE_AUTONOMOUS
         
     def on_IsOperatorControl(self, tm):
         with self._lock:
-            self._check_sleep()
+            self._check_sleep(2)
             if not self._run_code:
                 return False
             return self.mode == RobotController.MODE_OPERATOR_CONTROL
@@ -168,7 +168,7 @@ class RobotController(object):
                         raise RuntimeError(errstr)
                     
                 # reset this, just in case
-                wpilib.fake_time.FAKETIME.slept = True
+                wpilib.fake_time.FAKETIME.slept = [True]*3
                 
                 if mode == RobotController.MODE_DISABLED:
                     self.myrobot.Disabled()
@@ -182,6 +182,7 @@ class RobotController(object):
                 last_mode = mode
                 
         except:
+            self.myrobot.GetWatchdog().SetEnabled(False)
             self.set_mode(RobotController.MODE_DISABLED)
             raise
         
