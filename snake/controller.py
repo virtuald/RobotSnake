@@ -7,6 +7,7 @@ import threading
 import time
 
 import fake_wpilib as wpilib
+import _wpilib
 from .drive_train import DriveTrain
 
 class RobotController(object):
@@ -29,9 +30,9 @@ class RobotController(object):
         self.drive_train = DriveTrain(DriveTrain.TANK_TREAD)
         
         # attach to the robot
-        self.myrobot.on_IsEnabled = self.on_IsEnabled
-        self.myrobot.on_IsAutonomous = self.on_IsAutonomous
-        self.myrobot.on_IsOperatorControl = self.on_IsOperatorControl
+        _wpilib.internal.on_IsEnabled = self.on_IsEnabled
+        _wpilib.internal.on_IsAutonomous = self.on_IsAutonomous
+        _wpilib.internal.on_IsOperatorControl = self.on_IsOperatorControl
         
         # any data shared with the snake board must be protected by
         # this since it's running in a different thread
@@ -145,7 +146,7 @@ class RobotController(object):
         
         # setup things for the robot
         self.driver_station = wpilib.DriverStation.GetInstance()
-        self.myrobot._watchdog.error_handler = self.on_WatchdogError
+        self.myrobot.watchdog.error_handler = self.on_WatchdogError
         
         last_mode = None
         

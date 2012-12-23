@@ -10,7 +10,7 @@ import time
 import threading
 
 import fake_wpilib as wpilib
-import fake_wpilib.fake_time
+import _wpilib.fake_time
 
 
 class SnakeTime(object):
@@ -42,7 +42,7 @@ class SnakeTime(object):
         if notifier in self.notifiers:
             self.notifiers.remove( notifier )
 
-fake_wpilib.fake_time.FAKETIME = SnakeTime()
+_wpilib.fake_time.FAKETIME = SnakeTime()
 
 class SnakeWatchdog(object):
     '''
@@ -57,7 +57,7 @@ class SnakeWatchdog(object):
         This class should be fully threadsafe.
     '''
     
-    kDefaultWatchdogExpiration = fake_wpilib.Watchdog.kDefaultWatchdogExpiration
+    kDefaultWatchdogExpiration = wpilib.Watchdog.kDefaultWatchdogExpiration
 
     def __init__(self):
     
@@ -165,6 +165,6 @@ class SnakeWatchdog(object):
                             print('WATCHDOG FAILURE! Last fed %0.3f seconds ago (expiration: %0.3f seconds)' % 
                                   (period, self.expiration), file=sys.stderr)
 
-fake_wpilib.Watchdog = SnakeWatchdog
+wpilib.Watchdog = SnakeWatchdog
 
 
