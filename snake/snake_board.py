@@ -11,25 +11,23 @@
 
 import tkinter as tk
 import queue
-import math 
 
-DEGREES = 360
 
 class SnakeBoard(object):
     
-
-    
-    def __init__(self, controller, board_size):
+    def __init__(self, game_manager, board_size):
         '''
             initializes all default values and creates 
             a board, waits for run() to be called
             to start the board
             
-            controller - robot code controller class
+            game_manager - game manager class instance
             board_size - a tuple with values (rows, cols)
         '''
         
-        self.controller = controller
+        self.game_manager = game_manager
+        self.game_elements = []      # robots, walls, missles, etc
+        
         self.root = tk.Tk()
         self.root.wm_title("RobotSnake")
         
@@ -40,19 +38,19 @@ class SnakeBoard(object):
         self.mode = tk.IntVar()
         
         def _set_mode():
-            if self.controller.is_alive():
-                self.controller.set_mode(self.mode.get())
+            self.game_manager.set_mode(self.mode.get())
         
         button = tk.Radiobutton(frame, text='Disabled', variable=self.mode, \
-                                value=controller.MODE_DISABLED, command=_set_mode)
+                                value=game_manager.MODE_DISABLED, command=_set_mode)
         button.pack(side=tk.LEFT)
         button = tk.Radiobutton(frame, text='Autonomous', variable=self.mode, \
-                                value=controller.MODE_AUTONOMOUS, command=_set_mode)
+                                value=game_manager.MODE_AUTONOMOUS, command=_set_mode)
         button.pack(side=tk.LEFT)
         button = tk.Radiobutton(frame, text='Teleoperated', variable=self.mode, \
-                                value=controller.MODE_OPERATOR_CONTROL, command=_set_mode)
+                                value=game_manager.MODE_OPERATOR_CONTROL, command=_set_mode)
         button.pack(side=tk.LEFT)
         
+        # setup board characteristics
         self.rows, self.cols = board_size
         self.margin = 5
         self.cellSize = 30
@@ -62,6 +60,8 @@ class SnakeBoard(object):
         self.canvas = tk.Canvas(self.root, width=self.canvasWidth, height=self.canvasHeight)
         self.canvas.pack()
         self.root.resizable(width=0, height=0)
+        
+        self.text_id = None
         
         # Store canvas in root and in canvas itself for callbacks
         self.root.canvas = self.canvas.canvas = self.canvas
@@ -77,7 +77,7 @@ class SnakeBoard(object):
         self.root.bind("<Key>", self.key_pressed)
         
         # connect to the controller
-        self.controller.on_mode_change(lambda mode: self.idle_add(self.on_robot_mode_change, mode))
+        self.game_manager.on_mode_change(lambda mode: self.idle_add(self.on_robot_mode_change, mode))
         
         self.timer_fired()
         
@@ -100,68 +100,34 @@ class SnakeBoard(object):
                 break
             callable(*args)
         
+    def add_game_element(self, element):
+        '''Add elements to the board'''
+        
+        element.initialize(self.canvas)
+        self.game_elements.append(element)
         
     def run(self):
         # and launch the thread
         self.root.mainloop()  # This call BLOCKS
          
     def timer_fired(self):
-        ignoreThisTimerEvent = self.ignoreNextTimerEvent
-        self.ignoreNextTimerEvent = False
         
-        if self.controller.is_alive() and self.isGameOver == False and ignoreThisTimerEvent == False:
+        if self.isGameOver == False:
             # only process timer_fired if game is not over
-            self.move_robot()
-            self.redraw_all()
-            #draw robot position
-            x, y, z = self.controller.robot_pos
-            self.draw_snake_cell(x, y, "red")
-            self.draw_direction(x,y,self.controller.robot_face,"green")
+            self.move_objects()
             
         # whether or not game is over, call next timer_fired
         # (or we'll never call timer_fired again!)
         delay = 150 # milliseconds
         self.canvas.after(delay, self.timer_fired) # pause, then call timerFired again
-
-    def move_robot(self):
-        direction = None
         
-        # don't move the robot in disabled mode... 
-        if self.controller.get_mode() != self.controller.MODE_DISABLED:
-            direction = self.controller.drive_train.get_direction()
-            
-        if direction is not None:
-            #currently on a 2d grid board we are allowing only movement and
-            #yaw in the 0, 90, 180, 270 directions
-            robot_direction = direction[0]
-            robot_speed = direction[1]
-            robot_yaw = direction[2]
-            facing =  self.controller.robot_face
-            #since move_direction is referencing the robot and facing
-            #references the board the combined angle is the movement
-            #referencing the board  
-            move_direction =  (robot_direction + facing) % DEGREES
-            if move_direction >= 0 and move_direction < 90:
-                self.controller.robot_pos[1] += robot_speed
-            elif move_direction >= 90 and move_direction < 180:
-                self.controller.robot_pos[0] += robot_speed
-            elif move_direction >= 180 and move_direction < 270:
-                self.controller.robot_pos[1] -= robot_speed
-            elif move_direction >= 270 and move_direction < 360:
-                self.controller.robot_pos[0] -= robot_speed
-            
-            self.controller.robot_face = (robot_yaw * DEGREES + facing ) % DEGREES
-            if robot_speed != 0 or robot_yaw !=0:
-                print("Robot Facing: " + str(facing) )
-                print("Robot Direction: " + str(robot_direction))
-                print("Robot Speed: " + str(robot_speed))
-                print("Move Direction: " + str(move_direction))
-                print("Pos: " +  str(self.controller.robot_pos[0]) + ", " + 
-                      str(self.controller.robot_pos[1]))
-                print("Yaw: " + str(robot_yaw) )
-            
-        #clear joystick value
-        self.controller.set_joystick(0, 0)
+        
+    def move_objects(self):
+        
+        # TODO: process collisions and such too
+        
+        for element in self.game_elements:
+            element.perform_move()
         
     def key_pressed(self, event):
         '''
@@ -169,123 +135,75 @@ class SnakeBoard(object):
             right, likely to actually be based on a joystick event... not sure
             yet
         '''
+        
         if event.keysym == "Up":
-            self.controller.set_joystick(0, 1)
+            self.game_manager.set_joystick(0, 1, 0)      # robot 0
         elif event.keysym == "Down":
-            self.controller.set_joystick(0, -1)
+            self.game_manager.set_joystick(0, -1, 0)     # robot 0
         elif event.keysym == "Left":
-            self.controller.set_joystick(1, 0)
+            self.game_manager.set_joystick(1, 0, 0)      # robot 0
         elif event.keysym == "Right":
-            self.controller.set_joystick(-1, 0)
+            self.game_manager.set_joystick(-1, 0, 0)     # robot 0
+            
+        #elif event.keysym == "w":
+        #    self.game_manager.set_joystick(0, 1, 1)      # robot 1
+        #elif event.keysym == "s":
+        #    self.game_manager.set_joystick(0, -1, 1)     # robot 1
+        #elif event.keysym == "a":
+        #    self.game_manager.set_joystick(1, 0, 1)      # robot 1
+        #elif event.keysym == "d":
+        #    self.game_manager.set_joystick(-1, 0, 1)     # robot 1
+            
         elif event.char == " ":
-            mode = self.controller.get_mode()
-            if mode == self.controller.MODE_DISABLED:
-                self.controller.set_mode(self.controller.MODE_OPERATOR_CONTROL)
+            mode = self.game_manager.get_mode()
+            if mode == self.game_manager.MODE_DISABLED:
+                self.game_manager.set_mode(self.game_manager.MODE_OPERATOR_CONTROL)
             else:
-                self.controller.set_mode(self.controller.MODE_DISABLED)
+                self.game_manager.set_mode(self.game_manager.MODE_DISABLED)
     
     def init_canvas(self):
         '''
-            initializes self.canvas to draw on
+            initializes canvas to draw on
         '''
-        self.load_snake_board()
-        self.inDebugMode = False
-        self.isGameOver = False
-        self.snakeDrow = 0
-        self.snakeDcol = -1 # start moving left
-        self.ignoreNextTimerEvent = False
-        self.redraw_all()
         
-    def load_snake_board(self):
-        '''
-            loads the board on to the self.canvas
-        '''
-        self.snakeBoard = []
-        for row in range(self.rows): 
-            self.snakeBoard += [[0] * self.cols]
-        self.spawn_robot()
-        #find_snake_head(self.canvas)
-        #place_food(self.canvas)
-        
-    def spawn_robot(self):
-        '''
-           Does things required to spawn a robot on to field including 
-           storing its locations, location is stored as location on map
-           and robots facing direction which is represented as degrees
-        '''
-        #defines robot position
-        self.controller.robot_pos = [self.rows//2, self.cols//2,
-                                                      0]
-        #defines direction robot is facing in degrees 
-        self.controller.robot_face = 0 
-        
-    def redraw_all(self):
-        self.canvas.delete(tk.ALL)
         self.draw_snake_board()
+        self.isGameOver = False
+        self.draw_snake_board()
+        self.draw_mode_text()
+        
+    def draw_mode_text(self):
         
         text = None
         
         if self.isGameOver == True:
             text = "Game Over!"
-        elif not self.controller.is_alive():
-            text = "ROBOT DIED"
-        elif self.controller.get_mode() == self.controller.MODE_DISABLED:
+        #elif not self.controller.is_alive():
+        #    text = "ROBOT DIED"
+        elif self.game_manager.get_mode() == self.game_manager.MODE_DISABLED:
             text = "ROBOT DISABLED"
+        
+        if self.text_id is not None:
+            self.canvas.delete(self.text_id)
+            self.text_id = None
         
         if text is not None:
             cx = self.canvasWidth/2
             cy = self.canvasHeight/2
-            self.canvas.create_text(cx, cy, text=text, font=("Helvetica", 32, "bold"))
+            self.text_id = self.canvas.create_text(cx, cy, text=text, font=("Helvetica", 32, "bold"))
         
             
     def draw_snake_board(self):
-        rows = len(self.snakeBoard)
-        cols = len(self.snakeBoard[0])
-        for row in range(rows):
-            for col in range(cols):
-                self.draw_snake_cell(row, col, "white")
-        
-    def draw_robot_cell(self, row, col, color, facing):
-        
-        # TODO: http://stackoverflow.com/questions/3408779/how-do-i-rotate-a-polygon-in-python-on-a-tkinter-canvas
-        
+        for row in range(self.rows):
+            for col in range(self.cols):
+                self.draw_board_cell(row, col, "white")
+            
+    def draw_board_cell(self, row, col, color):
         left = self.margin + col * self.cellSize
         right = left + self.cellSize
         top = self.margin + row * self.cellSize
         bottom = top + self.cellSize
-        
-        self.canvas.create_rectangle(left, top, right, bottom, fill=color)
-        
-        
-    def draw_snake_cell(self, row, col, color):
-        left = self.margin + col * self.cellSize
-        right = left + self.cellSize
-        top = self.margin + row * self.cellSize
-        bottom = top + self.cellSize
-        self.canvas.create_rectangle(left, top, right, bottom, fill=color)
-
-        
-    def draw_direction(self,row,col, direction,color):
-        left = self.margin + col * self.cellSize
-        right = left + self.cellSize
-        top = self.margin + row * self.cellSize
-        bottom = top + self.cellSize
-        center_y = (top + bottom) / 2
-        center_x = (left + right) / 2
-        radius = self.cellSize / 2
-        rad_dir = math.radians(direction)
-        rad_angle1 = math.radians(135)
-        rad_angle2 = math.radians(225)
-        point1 = center_x + radius * math.cos(rad_dir), center_y + radius * math.sin(rad_dir)
-        point2 = center_x + radius * math.cos(rad_dir + rad_angle1), center_y + radius * math.sin(rad_dir + rad_angle1)
-        point3 = center_x + radius * math.cos(rad_dir + rad_angle2), center_y + radius * math.sin(rad_dir + rad_angle2)
-        direction = self.controller.drive_train.get_direction()
-        yaw = direction[2]
-        self.canvas.create_polygon(point1, point2, point3, fill=color)
-
-        
-        
+        self.canvas.create_rectangle(left, top, right, bottom, fill=color)        
         
     def on_robot_mode_change(self, mode):
-        self.redraw_all()
-        self.mode.set(self.controller.get_mode())
+        self.mode.set(mode)
+        self.draw_mode_text()

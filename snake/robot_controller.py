@@ -9,20 +9,13 @@ import time
 import fake_wpilib as wpilib
 import _wpilib
 from .drive_train import DriveTrain
+from .game_manager import GameManager
 
 class RobotController(object):
-
-    MODE_DISABLED = 0
-    MODE_AUTONOMOUS = 1
-    MODE_OPERATOR_CONTROL = 2
-    
-    mode_map = {MODE_DISABLED: 'Disabled', 
-                MODE_AUTONOMOUS: 'Autonomous',
-                MODE_OPERATOR_CONTROL: 'OperatorControl'}
     
     def __init__(self, robot_module, myrobot):
     
-        self.mode = RobotController.MODE_DISABLED
+        self.mode = GameManager.MODE_DISABLED
         self.mode_callback = None
     
         self.robot_module = robot_module
@@ -50,10 +43,10 @@ class RobotController(object):
         
             # if the robot code is spinning in any of the modes, then
             # we need to change the mode so it returns back to us
-            if self.mode == RobotController.MODE_DISABLED:
-                self.mode = RobotController.MODE_OPERATOR_CONTROL
+            if self.mode == GameManager.MODE_DISABLED:
+                self.mode = GameManager.MODE_OPERATOR_CONTROL
             else:
-                self.mode = RobotController.MODE_DISABLED
+                self.mode = GameManager.MODE_DISABLED
         
         try:
             self.thread.join(timeout=5.0)
@@ -85,12 +78,17 @@ class RobotController(object):
             
     def set_mode(self, mode):
         
-        if mode not in [RobotController.MODE_DISABLED, 
-                        RobotController.MODE_AUTONOMOUS, 
-                        RobotController.MODE_OPERATOR_CONTROL]:
+        if mode not in [GameManager.MODE_DISABLED, 
+                        GameManager.MODE_AUTONOMOUS, 
+                        GameManager.MODE_OPERATOR_CONTROL]:
             raise ValueError("Invalid value for mode: %s" % mode)
         
         with self._lock:
+            
+            # TODO: need a way to notify the caller that the set failed. Perhaps an exception?
+            if not self.is_alive():
+                return
+            
             old_mode = self.mode
             self.mode = mode
             callback = self.mode_callback
@@ -121,26 +119,26 @@ class RobotController(object):
     def on_IsEnabled(self):
         with self._lock:
             self._check_sleep(0)
-            return self.mode != RobotController.MODE_DISABLED
+            return self.mode != GameManager.MODE_DISABLED
         
     def on_IsAutonomous(self, tm):
         with self._lock:
             self._check_sleep(1)
             if not self._run_code:
                 return False
-            return self.mode == RobotController.MODE_AUTONOMOUS
+            return self.mode == GameManager.MODE_AUTONOMOUS
         
     def on_IsOperatorControl(self, tm):
         with self._lock:
             self._check_sleep(2)
             if not self._run_code:
                 return False
-            return self.mode == RobotController.MODE_OPERATOR_CONTROL
+            return self.mode == GameManager.MODE_OPERATOR_CONTROL
             
     def on_WatchdogError(self, last_fed, period, expiration):
         print('WATCHDOG FAILURE! Last fed %0.3f seconds ago (expiration: %0.3f seconds)' % 
                                   (period, expiration), file=sys.stderr)
-        self.set_mode(RobotController.MODE_DISABLED)
+        self.set_mode(GameManager.MODE_DISABLED)
     
     def _robot_thread(self):
         
@@ -165,17 +163,17 @@ class RobotController(object):
                 #    this is the only acceptable reason for this to occur
                 if last_mode is not None:
                     if last_mode == mode:                        
-                        errstr = '%s() function returned before the mode changed' % self.mode_map[last_mode]
+                        errstr = '%s() function returned before the mode changed' % GameManager.mode_map[last_mode]
                         raise RuntimeError(errstr)
                     
                 # reset this, just in case
                 wpilib.fake_time.FAKETIME.slept = [True]*3
                 
-                if mode == RobotController.MODE_DISABLED:
+                if mode == GameManager.MODE_DISABLED:
                     self.myrobot.Disabled()
-                elif mode == RobotController.MODE_AUTONOMOUS:
+                elif mode == GameManager.MODE_AUTONOMOUS:
                     self.myrobot.Autonomous()
-                elif mode == RobotController.MODE_OPERATOR_CONTROL:
+                elif mode == GameManager.MODE_OPERATOR_CONTROL:
                     self.myrobot.OperatorControl()
                     
                 # make sure infinite loops don't kill the processor... 
@@ -184,6 +182,6 @@ class RobotController(object):
                 
         except:
             self.myrobot.GetWatchdog().SetEnabled(False)
-            self.set_mode(RobotController.MODE_DISABLED)
+            self.set_mode(GameManager.MODE_DISABLED)
             raise
         
