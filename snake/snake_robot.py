@@ -58,7 +58,7 @@ class SnakeRobot(GameElement):
             
             robot_speed, robot_yaw = direction
             
-            robot_yaw = robot_yaw * 20
+            robot_yaw = robot_yaw * 80
             
             if robot_yaw != 0:
                 self.rotate(robot_yaw)

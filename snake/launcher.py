@@ -3,6 +3,7 @@ from .game_manager import GameManager
 from .robot_controller import RobotController
 from .snake_board import SnakeBoard
 from .snake_robot import SnakeRobot
+from .snake_beacon import SnakeBeacon
 
 def launch_robot(robot_module, myrobot, board_size=(8,16)):
     '''
@@ -20,12 +21,15 @@ def launch_robot(robot_module, myrobot, board_size=(8,16)):
     # create the robot
     snake_robot = SnakeRobot(controller) 
     
+    snake_beacon = SnakeBeacon(controller, snake_robot)
+    
     # start the robot controller (does not block)
     controller.run()
     
     # create the board 
     snake_board = SnakeBoard(game_manager, board_size)
     snake_board.add_game_element(snake_robot)
+    snake_board.add_game_element(snake_beacon)
     
 
     
