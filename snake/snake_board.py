@@ -177,8 +177,8 @@ class SnakeBoard(object):
         
         if self.isGameOver == True:
             text = "Game Over!"
-        #elif not self.controller.is_alive():
-        #    text = "ROBOT DIED"
+        elif not self.game_manager.is_alive():
+            text = "ROBOT DIED"
         elif self.game_manager.get_mode() == self.game_manager.MODE_DISABLED:
             text = "ROBOT DISABLED"
         

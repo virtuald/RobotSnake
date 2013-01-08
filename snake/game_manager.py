@@ -55,6 +55,12 @@ class GameManager(object):
     # API used by the SnakeBoard class
     #
     
+    def is_alive(self):
+        for robot in self.robots:
+            if not robot.is_alive():
+                return False
+        return True
+    
     def on_mode_change(self, callable):
         '''When the robot mode changes, call the function with the mode'''
         with self._lock:
