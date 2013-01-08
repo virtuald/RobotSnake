@@ -33,6 +33,9 @@ class SnakeRobot(GameElement):
     
     def perform_move(self):
         
+        if not self.controller.is_alive():
+            self.elements[1].set_color('gray')
+        
         # query the controller for move information
         self.move_robot()
         
