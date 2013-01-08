@@ -12,6 +12,31 @@ import random
 
 DEGREES = 360
 
+quotes = [
+    "All your base are belong to us",
+    "Drown the kids and shoot the neighbors! We've got a winner!",
+    '*evil chuckle* No Mr. Bond I expect you to die.',
+    'Have you ever danced with the devil in the pale moonlight?',
+    "I'll cut your heart out with a spoon",
+    "I'll get you my pretty. And your little dog too.",
+    "I'm going to enjoy watching you die,",
+    "I'm here to kill you. Is this a bad time?",
+    "It's a wonderful plan, isn't it? Everyone dies and I profit.",
+    "It's that stupid frog...kissed any princesses lately?",
+    "Nothing can beat the music of hundreds of voices screaming in unison.",
+    "The weak always strive to be weaker...",
+    "Wait, do you hear that? It's the sound of the Reaper calling your name.",
+    'Wanna know how I got these scars?',
+    "What fun is destruction if no precious lives are lost?",
+    "What? Not laughing yet? Just wait til I get to the punch line. It'll kill you! HaHaHaHaHaHaHaHa",
+    "You can run but you're still going to die!",
+    "You don't matter! In fact, in a few seconds, you won't even be matter.",    
+    "You gonna get whacked, 'cuz you're weak.",
+    "You play with fire, you get burned",
+    "You shall suffer! You shall all suffer!",
+    "Your death is inevitable, you cannot escape it",
+    ]
+
 class SnakeBeacon(GameElement):
     
     def __init__(self, controller, snake_robot):
@@ -64,6 +89,7 @@ class SnakeBeacon(GameElement):
         mode = self.robot.controller.get_mode()
         if mode  != GameManager.MODE_DISABLED:
             if distance < 20:
+                print("The Beacon: Fools! You'll never destroy me!")
                 self.generate_coordinates()
                 self.ticks = 0
                 
@@ -73,6 +99,12 @@ class SnakeBeacon(GameElement):
            
             # hehehe.
             self.ticks += 1
+            if self.ticks == 10:
+                print("The Beacon: %s" % quotes[random.randint(0, len(quotes)-1)])
+            elif self.ticks == 30:
+                print("The Beacon: %s" % quotes[random.randint(0, len(quotes)-1)])
+            elif self.ticks == 50:
+                print("The Beacon: Beware you fools.........the hour has come!")
             if self.ticks == 60:
                 if self.robot.controller.is_alive():
                     self.robot.controller.stop()
