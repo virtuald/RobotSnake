@@ -4,6 +4,7 @@
 import math
 import time
 
+from .game_manager import GameManager
 from .snake_elements import GameElement, DrawableElement
 import fake_wpilib as wpilib
 
@@ -28,18 +29,19 @@ class SnakeBeacon(GameElement):
         self.robot = snake_robot
         self.blink_time = time.time()
         self.ticks = 0
+        self.score = 0
         
         self.generate_coordinates()
         
     def generate_coordinates(self):
         
         if self.half == True:
-             # rand a center point between 300-600, 0-200
-             x = int(random.uniform(10,230))
-             y = int(random.uniform(10,250))
+            # rand a center point between 300-600, 0-200
+            x = int(random.uniform(10,230))
+            y = int(random.uniform(10,250))
         else:
-             x = int(random.uniform(250,480))
-             y = int(random.uniform(10, 250))
+            x = int(random.uniform(250,480))
+            y = int(random.uniform(10, 250))
         
         self.beacon.pts = [(x-5, y-5), (x+5,y-5), (x+5,y+5), (x-5,y+5)]
         self.beacon.center = (x, y)
@@ -59,16 +61,23 @@ class SnakeBeacon(GameElement):
             channel.value = distance
             
         # hehe.
-        if distance < 20:
-            self.generate_coordinates()
-            self.ticks = 0
+        mode = self.robot.controller.get_mode()
+        if mode  != GameManager.MODE_DISABLED:
+            if distance < 20:
+                self.generate_coordinates()
+                self.ticks = 0
+                
+                if mode == GameManager.MODE_AUTONOMOUS:
+                    self.score += 1
+                    print("Point scored! Current score is %s" % self.score)
            
-        # hehe
-        self.ticks += 1
-        if self.ticks == 60:
-            if self.robot.controller.is_alive():
-                self.robot.controller.stop()
-                print("Robot has been terminated by The Beacon.") 
+            # hehehe.
+            self.ticks += 1
+            if self.ticks == 60:
+                if self.robot.controller.is_alive():
+                    self.robot.controller.stop()
+                    print("Robot has been terminated by The Beacon.")
+                    print("Score: %s" % self.score) 
         
         self.blink()        
         
