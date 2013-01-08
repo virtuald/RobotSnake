@@ -179,9 +179,7 @@ class RobotController(object):
                 # make sure infinite loops don't kill the processor... 
                 time.sleep(0.001)
                 last_mode = mode
-                
-        except:
+        
+        finally:
             self.myrobot.GetWatchdog().SetEnabled(False)
             self.set_mode(GameManager.MODE_DISABLED)
-            raise
-        
