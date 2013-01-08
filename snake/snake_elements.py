@@ -70,11 +70,16 @@ class DrawableElement(object):
         # calculate rotation for each point
         self.pts = [p for p in map(lambda x: _rotate_point(x), self.pts)]
         
+    def set_color(self, color):
+        self.color = color
+        self.canvas.itemconfig(self.id, fill=color)
+        
     def update_coordinates(self):
     
         # flatten the list of coordinates
-        pts = [c for p in self.pts for c in p]
-        self.canvas.coords(self.id, *pts)
+        if hasattr(self, 'canvas'):
+            pts = [c for p in self.pts for c in p]
+            self.canvas.coords(self.id, *pts)
         
         
         
