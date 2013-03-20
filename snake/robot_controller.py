@@ -109,11 +109,11 @@ class RobotController(object):
         '''This ensures that the robot code called Wait() at some point'''
         
         # TODO: There are some cases where it would be ok to do this... 
-        if not wpilib.fake_time.FAKETIME.slept[idx]:
+        if not _wpilib._fake_time.FAKETIME.slept[idx]:
             errstr = '%s() function is not calling wpilib.Wait() in its loop!' % self.mode_map[self.mode]
             raise RuntimeError(errstr)
             
-        wpilib.fake_time.FAKETIME.slept[idx] = False
+        _wpilib._fake_time.FAKETIME.slept[idx] = False
         
     
     def on_IsEnabled(self):
@@ -167,7 +167,7 @@ class RobotController(object):
                         raise RuntimeError(errstr)
                     
                 # reset this, just in case
-                wpilib.fake_time.FAKETIME.slept = [True]*3
+                _wpilib._fake_time.FAKETIME.slept = [True]*3
                 
                 if mode == GameManager.MODE_DISABLED:
                     self.myrobot.Disabled()

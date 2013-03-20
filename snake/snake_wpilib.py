@@ -10,7 +10,7 @@ import time
 import threading
 
 import fake_wpilib as wpilib
-import _wpilib.fake_time
+import _wpilib._fake_time
 
 
 class SnakeTime(object):
@@ -42,7 +42,7 @@ class SnakeTime(object):
         if notifier in self.notifiers:
             self.notifiers.remove( notifier )
 
-_wpilib.fake_time.FAKETIME = SnakeTime()
+_wpilib._fake_time.FAKETIME = SnakeTime()
 
 class SnakeWatchdog(object):
     '''

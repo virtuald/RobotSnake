@@ -13,10 +13,10 @@ set PYTHON_EXE=python.exe
 
 REM TODO: Need a better way to detect python 3 automatically
 
-set PYTHON_BIN=C:\Python33\%PYTHON_EXE%
+set PYTHON_BIN=C:\Python32\%PYTHON_EXE%
 if exist %PYTHON_BIN% goto python_found
 
-set PYTHON_BIN=C:\Python32\%PYTHON_EXE%
+set PYTHON_BIN=C:\Python33\%PYTHON_EXE%
 if exist %PYTHON_BIN% goto python_found
 
 echo Error: Could not find python 3
