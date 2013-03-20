@@ -137,13 +137,13 @@ class SnakeBoard(object):
         '''
         
         if event.keysym == "Up":
-            self.game_manager.set_joystick(0, 1, 0)      # robot 0
+            self.game_manager.set_joystick(0.0, 1.0, 0)      # robot 0
         elif event.keysym == "Down":
-            self.game_manager.set_joystick(0, -1, 0)     # robot 0
+            self.game_manager.set_joystick(0.0, -1.0, 0)     # robot 0
         elif event.keysym == "Left":
-            self.game_manager.set_joystick(1, 0, 0)      # robot 0
+            self.game_manager.set_joystick(1.0, 0.0, 0)      # robot 0
         elif event.keysym == "Right":
-            self.game_manager.set_joystick(-1, 0, 0)     # robot 0
+            self.game_manager.set_joystick(-1.0, 0.0, 0)     # robot 0
             
         #elif event.keysym == "w":
         #    self.game_manager.set_joystick(0, 1, 1)      # robot 1

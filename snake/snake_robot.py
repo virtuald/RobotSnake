@@ -98,5 +98,5 @@ class SnakeRobot(GameElement):
         '''
             
         #clear joystick value
-        self.controller.set_joystick(0, 0)
+        self.controller.set_joystick(0.0, 0.0)
         

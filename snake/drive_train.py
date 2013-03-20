@@ -23,8 +23,8 @@ class DriveTrain(object):
         with self._lock:
             if self.drive_train == 0:
                 try:
-                    jag_r = wpilib.DigitalModule._pwm[0]
-                    jag_l = wpilib.DigitalModule._pwm[1]
+                    jag_r = wpilib.DigitalModule._pwm[1]
+                    jag_l = wpilib.DigitalModule._pwm[0]
                     
                     jag1 = 0
                     jag2 = 0
