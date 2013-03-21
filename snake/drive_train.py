@@ -36,7 +36,7 @@ class DriveTrain(object):
                         jag2 = jag_l.Get()
 
                     #speed obtained by adding together motor speeds
-                    speed = (jag1 + jag2) / 2 
+                    speed = (jag1 + jag2) / 4 
                     #Assuming that the treads are 1m away from center
                     yaw = (jag2 / DriveTrain.ROBOT_CIRCUM) - (jag1/DriveTrain.ROBOT_CIRCUM) 
                     
